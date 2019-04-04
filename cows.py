@@ -1,6 +1,7 @@
 import random
 import os.path
 import os
+import pickle
 
 
 def checker(ans, real_ans):
@@ -9,9 +10,9 @@ def checker(ans, real_ans):
     for i in range(0, len(ans)):
         if ans[i] == real_ans[i]:
             bulls += 1
-        elif real_ans.find(ans[i]) != -1:
+        elif ans[i] in real_ans:
             cows += 1
-    return str(cows) + str(bulls)
+    return (str(cows), str(bulls))
 
 
 def check_answer(ans, real_ans):
@@ -19,26 +20,29 @@ def check_answer(ans, real_ans):
     print('You have {} cows and {} bulls'.format(ans_pair[0], ans_pair[1]))
 
 
-def generate():
-    a = random.randint(0, 9)
-    b = random.randint(0, 9)
-    c = random.randint(0, 9)
-    d = random.randint(0, 9)
-    res = str(a) + str(b) + str(c) + str(d)
-    if len(set(res)) < len(res):
-        res = generate()
-    return res
+def generate(num_length):
+    num_list = []
+    while num_length != len(set(num_list)):
+        num_list = random.choices(['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'], k=num_length)
+    num_list = ''.join(num_list)
+    return num_list
 
 
 def game_man(name):
-    real_ans = generate()
-    print('I guess number for you. Try to find it \nWrite your variants and I will say how many cows and bulls are there\nIf you want to throw in the towel write [end]')
+    num_length = 0
+    while num_length < 4 or num_length > 10:
+        print('Write correct length of the number: [from 4 to 10]')
+        num_length = int(input())
+    real_ans = generate(num_length)
+    print('I guess number for you')
+    print('Try to find it \nWrite your variants and I will say how many cows and bulls are there')
+    print('If you want to throw in the towel write [end]')
     ans = input()
     count_attemt = 0
     while real_ans != ans:
         if ans == 'end':
             break
-        if len(ans) != 4 or len(set(ans)) < len(ans) or not ans.isdigit():
+        if len(ans) != num_length or len(set(ans)) < len(ans) or not ans.isdigit():
             print('Incorrect input, try again')
             ans = input()
             continue
@@ -52,16 +56,18 @@ def game_man(name):
         update_rating(name, count_attemt)
 
 
-def generate_list():
-    res_list = []
-    for a in range(0, 10):
-        for b in range(0, 10):
-            for c in range(0, 10):
-                for d in range(0, 10):
-                    s = str(a) + str(b) + str(c) + str(d)
-                    if len(set(s)) == len(s):
-                        res_list.append(s)
-    return res_list
+def generate_list(n):
+    if n == 1:
+        return ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0']
+
+    gen_list = generate_list(n - 1)
+    new_list = []
+    for i in gen_list:
+        for a in range(0, 10):
+            if len(set(i + str(a))) == len(i) + 1:
+                new_list.append(i + str(a))
+
+    return new_list
 
 
 def optimizator_counter(s, answers):
@@ -69,11 +75,11 @@ def optimizator_counter(s, answers):
     list_ans = list(answers)
     for a in list_ans:
         k = checker(s, a)
-        dict_counter[k] += 1
+        dict_counter[k[0] + k[1]] += 1
     return max(dict_counter.values())
 
 
-def question(res_list, answers):
+def clever_question(res_list, answers):
     min_res = 5040
     new = '1234'
     for a in res_list:
@@ -84,6 +90,10 @@ def question(res_list, answers):
     return new
 
 
+def question(answers):
+    return list(answers)[0]
+
+
 def update_answers(question, ans, answers):
     up_answers = list(answers)
     for a in up_answers:
@@ -91,24 +101,29 @@ def update_answers(question, ans, answers):
             answers.discard(a)
 
 
+def first_number_computer_game(n):
+    s = ''
+    for a in range(0, n):
+        s += str(a)
+    return s
+
+
 def game_computer():
-    print('Make your number and answer the question in format [num_cows num_bulls] ')
-    res_list = generate_list()
+    print('Make your number (quantity of digits from 4 to 10) and answer the question in format [num_cows num_bulls] ')
+    print("Please, write quantity of digits")
+    num_len = int(input())
+    res_list = generate_list(num_len)
     answers = set(res_list)
-    new = '1234'
+    new = first_number_computer_game(num_len)
     while len(answers) > 1:
         print(new)
-        inp = ''
-        flag = False
-        while len(inp) != 3 or not inp[0].isdigit() or not inp[2].isdigit() or inp[1] != ' ':
-            if flag:
-                print('Incorrect input. Answer format is [num_cows num_bulls]. Try again')
-            inp = input()
-            flag = True
-        cows = inp[0]
-        bulls = inp[2]
-        update_answers(new, cows + bulls, answers)
-        new = question(res_list, answers)
+        ans = input()
+        ans = ans.split(' ')
+        update_answers(new, (ans[0], ans[1]), answers)
+        if num_len == 4:
+            new = clever_question(res_list, answers)
+        elif len(answers) != 0:
+            new = question(answers)
     if len(answers) == 1:
         print('Your number is {}'.format(list(answers)[0]))
     else:
@@ -117,31 +132,33 @@ def game_computer():
 
 def update_rating(name, score):
     if not os.path.isfile('./rating.txt'):
-        file = open('rating.txt', 'w')
-        file.close()
-    file = open('rating.txt', 'a')
-    file.write('{} {}\n'.format(name, score))
-    file.close()
+        with open('rating.txt', 'wb') as file:
+            a = [(name, score)]
+            pickle.dump(a, file)
+    else:
+        with open('rating.txt', 'rb') as f:
+            a = pickle.load(f)
+            a.append((name, score))
+        with open('rating.txt', 'wb') as f:
+            pickle.dump(a, f)
 
 
 def sort_by_rating(s):
-    return int(s.split()[1])
+    return s[1]
 
 
 def output_rating():
     if not os.path.isfile('./rating.txt'):
-        print('There are no position in the rating')
+        print('There are no positions in the rating')
     else:
-        file = open('rating.txt', 'r')
-        l = [line.strip() for line in file]
-        l.sort(key=sort_by_rating)
-        print(' {3} {0: <{2}}{1}'.format('PLAYER', 'ATTEMTS', 24, 'PLACE'))
-        place = 1
-        for s in l:
-            h = s.split()
-            print('{2: ^7}{0: <24}{1: ^7}'.format(h[0], h[1], place))
-            place += 1
-        file.close()
+        with open('rating.txt', 'br') as f:
+            a = list(pickle.load(f))
+            a.sort(key=sort_by_rating)
+            print(' {3} {0: <{2}}{1}'.format('PLAYER', 'ATTEMTS', 24, 'PLACE'))
+            place = 1
+            for s in a:
+                print('{2: ^7}{0: <24}{1: ^7}'.format(s[0], s[1], place))
+                place += 1
 
 
 def reset_rating():
