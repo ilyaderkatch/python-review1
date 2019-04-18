@@ -3,6 +3,9 @@ import os.path
 import os
 import pickle
 
+number_list = [x for x in range(0, 10)]
+num_correct_sequences = 5040
+
 
 def checker(ans, real_ans):
     bulls = 0
@@ -12,7 +15,7 @@ def checker(ans, real_ans):
             bulls += 1
         elif ans[i] in real_ans:
             cows += 1
-    return (str(cows), str(bulls))
+    return (cows, bulls)
 
 
 def check_answer(ans, real_ans):
@@ -23,8 +26,8 @@ def check_answer(ans, real_ans):
 def generate(num_length):
     num_list = []
     while num_length != len(set(num_list)):
-        num_list = random.choices(['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'], k=num_length)
-    num_list = ''.join(num_list)
+        num_list = random.choices(number_list, k=num_length)
+    num_list = int(''.join([str(i) for i in num_list]))
     return num_list
 
 
@@ -38,40 +41,50 @@ def game_man(name):
     print('Try to find it \nWrite your variants and I will say how many cows and bulls are there')
     print('If you want to throw in the towel write [end]')
     ans = input()
-    count_attemt = 0
-    while real_ans != ans:
+    count_attempt = 0
+    while str(real_ans) != ans:
         if ans == 'end':
             break
         if len(ans) != num_length or len(set(ans)) < len(ans) or not ans.isdigit():
             print('Incorrect input, try again')
             ans = input()
             continue
-        count_attemt += 1
-        check_answer(ans, real_ans)
+        count_attempt += 1
+        check_answer(ans, str(real_ans))
         ans = input()
     if ans == 'end':
         print('Your number was {}'.format(real_ans))
     else:
-        print('You found it! Count of attemts is {}'.format(count_attemt))
+        print('You found it! Count of attemts is {}'.format(count_attempt))
         update_rating(name, count_attemt)
 
 
 def generate_list(n):
     if n == 1:
-        return ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0']
+        return number_list
 
     gen_list = generate_list(n - 1)
     new_list = []
     for i in gen_list:
         for a in range(0, 10):
-            if len(set(i + str(a))) == len(i) + 1:
-                new_list.append(i + str(a))
+            if len(set(str(i * 10 + a))) == len(str(i)) + 1:
+                new_list.append(i * 10 + a)
 
     return new_list
 
 
+def generate_dict_counter(n):
+    dict_counter = {}
+    for a in range(0, n + 1):
+        b = 0
+        while a + b <= n:
+            dict_counter[str(a) + str(b)] = 0
+    return dict_counter
+
+
+
 def optimizator_counter(s, answers):
-    dict_counter = {'00': 0, '01': 0, '02': 0, '03': 0, '04': 0, '10': 0, '11': 0, '12': 0, '13': 0, '20': 0, '21': 0, '22': 0, '30': 0, '31': 0, '40': 0}
+    dict_counter = generate_dict_counter(4)
     list_ans = list(answers)
     for a in list_ans:
         k = checker(s, a)
@@ -80,7 +93,7 @@ def optimizator_counter(s, answers):
 
 
 def clever_question(res_list, answers):
-    min_res = 5040
+    min_res = num_correct_sequences
     new = '1234'
     for a in res_list:
         k = optimizator_counter(a, answers)
@@ -97,15 +110,12 @@ def question(answers):
 def update_answers(question, ans, answers):
     up_answers = list(answers)
     for a in up_answers:
-        if checker(question, a) != ans:
+        if checker(question, str(a)) != ans:
             answers.discard(a)
 
 
 def first_number_computer_game(n):
-    s = ''
-    for a in range(0, n):
-        s += str(a)
-    return s
+    return ''.join([str(i) for i in [x for x in range(0, n)]])
 
 
 def game_computer():
@@ -121,9 +131,9 @@ def game_computer():
         ans = ans.split(' ')
         update_answers(new, (ans[0], ans[1]), answers)
         if num_len == 4:
-            new = clever_question(res_list, answers)
+            new = str(clever_question(res_list, answers))
         elif len(answers) != 0:
-            new = question(answers)
+            new = str(question(answers))
     if len(answers) == 1:
         print('Your number is {}'.format(list(answers)[0]))
     else:
@@ -194,7 +204,6 @@ def main_game(name):
         main_game(name)
         return
     print('Bye!')
-    return
 
 
 def input_name():
@@ -203,4 +212,5 @@ def input_name():
     main_game(name)
 
 
-input_name()
+if __name__ == '__main__':
+    input_name()
