@@ -3,8 +3,10 @@ import os.path
 import os
 import pickle
 
-number_list = [x for x in range(0, 10)]
-num_correct_sequences = 5040
+number_list = list(range(10))
+
+def num_correct_sequences(n):
+    return 10**n
 
 
 def checker(ans, real_ans):
@@ -15,7 +17,7 @@ def checker(ans, real_ans):
             bulls += 1
         elif ans[i] in real_ans:
             cows += 1
-    return (cows, bulls)
+    return (str(cows), str(bulls))
 
 
 def check_answer(ans, real_ans):
@@ -27,7 +29,7 @@ def generate(num_length):
     num_list = []
     while num_length != len(set(num_list)):
         num_list = random.choices(number_list, k=num_length)
-    num_list = int(''.join([str(i) for i in num_list]))
+    num_list = ''.join([str(i) for i in num_list])
     return num_list
 
 
@@ -42,7 +44,7 @@ def game_man(name):
     print('If you want to throw in the towel write [end]')
     ans = input()
     count_attempt = 0
-    while str(real_ans) != ans:
+    while real_ans != ans:
         if ans == 'end':
             break
         if len(ans) != num_length or len(set(ans)) < len(ans) or not ans.isdigit():
@@ -50,13 +52,13 @@ def game_man(name):
             ans = input()
             continue
         count_attempt += 1
-        check_answer(ans, str(real_ans))
+        check_answer(ans, real_ans)
         ans = input()
     if ans == 'end':
         print('Your number was {}'.format(real_ans))
     else:
         print('You found it! Count of attemts is {}'.format(count_attempt))
-        update_rating(name, count_attemt)
+        update_rating(name, count_attempt)
 
 
 def generate_list(n):
@@ -69,7 +71,6 @@ def generate_list(n):
         for a in range(0, 10):
             if len(set(str(i * 10 + a))) == len(str(i)) + 1:
                 new_list.append(i * 10 + a)
-
     return new_list
 
 
@@ -79,32 +80,32 @@ def generate_dict_counter(n):
         b = 0
         while a + b <= n:
             dict_counter[str(a) + str(b)] = 0
+            b += 1
     return dict_counter
-
 
 
 def optimizator_counter(s, answers):
     dict_counter = generate_dict_counter(4)
     list_ans = list(answers)
     for a in list_ans:
-        k = checker(s, a)
+        k = checker(s, str(a))
         dict_counter[k[0] + k[1]] += 1
     return max(dict_counter.values())
 
 
 def clever_question(res_list, answers):
-    min_res = num_correct_sequences
+    min_res = num_correct_sequences(4)
     new = '1234'
     for a in res_list:
-        k = optimizator_counter(a, answers)
+        k = optimizator_counter(str(a), answers)
         if k < min_res:
             min_res = k
             new = a
-    return new
+    return str(new)
 
 
 def question(answers):
-    return list(answers)[0]
+    return str(list(answers)[0])
 
 
 def update_answers(question, ans, answers):
@@ -131,9 +132,9 @@ def game_computer():
         ans = ans.split(' ')
         update_answers(new, (ans[0], ans[1]), answers)
         if num_len == 4:
-            new = str(clever_question(res_list, answers))
+            new = clever_question(res_list, answers)
         elif len(answers) != 0:
-            new = str(question(answers))
+            new = question(answers)
     if len(answers) == 1:
         print('Your number is {}'.format(list(answers)[0]))
     else:
