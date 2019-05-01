@@ -3,7 +3,7 @@ import os.path
 import os
 import pickle
 
-number_list = list(range(10))
+number_list = list(range(10)) #комментарий
 
 def num_correct_sequences(n):
     return 10**n
